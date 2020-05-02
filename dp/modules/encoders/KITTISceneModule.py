@@ -37,7 +37,7 @@ class FullImageEncoder(nn.Module):
 
 
 class SceneUnderstandingModule(nn.Module):
-    def __init__(self):
+    def __init__(self, ord_num):
         super(SceneUnderstandingModule, self).__init__()
         self.encoder = FullImageEncoder()
         self.aspp1 = nn.Sequential(
@@ -69,7 +69,7 @@ class SceneUnderstandingModule(nn.Module):
             nn.Conv2d(512 * 5, 2048, 1),
             nn.ReLU(inplace=True),
             nn.Dropout2d(p=0.5),
-            nn.Conv2d(2048, 142, 1),  # KITTI 142 NYU 136 In paper, K = 80 is best
+            nn.Conv2d(2048, ord_num*2, 1),  # KITTI 142 NYU 136 In paper, K = 80 is best
             nn.UpsamplingBilinear2d(size=(385, 513))
         )
 

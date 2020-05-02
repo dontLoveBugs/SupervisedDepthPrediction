@@ -21,11 +21,14 @@ logging.basicConfig(format='[%(asctime)s %(levelname)s] %(message)s',
                     datefmt='%m/%d/%Y %H:%M:%S',
                     level=logging.INFO)
 
+# running in parent dir
+os.chdir("..")
+
 from dp.metircs.average_meter import AverageMeter
 from dp.utils.config import load_config, print_config
 from dp.utils.pyt_io import create_summary_writer
 from dp.metircs import build_metrics
-from dp.apis.solver import Solver
+from dp.core.solver import Solver
 from dp.datasets.build import build_loader
 from dp.visualizers import build_visualizer
 

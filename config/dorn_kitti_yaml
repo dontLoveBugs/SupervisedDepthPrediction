@@ -10,23 +10,28 @@ model:
     beta: 90.0
     scene: "Kitti"
     discretization: "SID"
+    pretrained: False
 data:
   name: "Kitti"
-  split: ["train", "selected_val"]
+  split: ["trainval", "selected_val"]
   path: '/data/wangxin/KITTI'
   tr_crop_size: [385, 513]
   te_crop_size: [385, 513]
   imagenet_normalize: True
 solver:
-  epochs: 16
-  batch_size: 12
-  step_decay: 1
+  epochs: 14
+  batch_size: 4
   optimizer:
-    name: 'Adam'
+    name: 'SGD'
     params:
-      lr: 0.001
+      lr: 0.0001
+      momentum: 0.9
+      weight_decay: 0.0005
   lr_policy:
-    name: 'constant'
+    name: 'Poly'
+    params:
+      gamma: 0.9
+      num_iteration: 300636
 apex:
   amp_used: True
   opt_level: "O1"

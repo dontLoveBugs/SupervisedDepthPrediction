@@ -10,6 +10,7 @@
 import numpy as np
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 from dp.modules.backbones.resnet import ResNetBackbone
 from dp.modules.encoders.KITTISceneModule import SceneUnderstandingModule as KittiSceneModule
@@ -20,35 +21,36 @@ from dp.modules.losses.ordinal_regression_loss import OrdinalRegressionLoss
 
 class DepthPredModel(nn.Module):
 
-    def __init__(self, ord_num, gamma=1.0, beta=80.0, scene="kitti", discretization="SID"):
+    def __init__(self, ord_num, gamma=1.0, beta=80.0, scene="Kitti", discretization="SID", pretrained=True):
         super().__init__()
         self.ord_num = ord_num
         self.gamma = gamma
         self.beta = beta
         self.discretization = discretization
-        self.backbone = ResNetBackbone()
-        if scene == "kitti":
-            self.SceneUnderstandingModule = KittiSceneModule()
-        else:
-            self.SceneUnderstandingModule = NyuSceneModule()
+
+        self.backbone = ResNetBackbone(pretrained=pretrained)
+        self.SceneUnderstandingModule = KittiSceneModule(ord_num) if scene == "Kitti" else NyuSceneModule(ord_num)
         self.regression_layer = OrdinalRegressionLayer()
         self.criterion = OrdinalRegressionLoss(ord_num, beta, discretization)
 
     def forward(self, image, target=None):
-        feat = self.backbone(input)
+        N, C, H, W = image.shape
+        feat = self.backbone(image)
         feat = self.SceneUnderstandingModule(feat)
         if self.training:
             prob = self.regression_layer(feat)
+            prob = F.interpolate(prob, size=(H, W), mode="bilinear", align_corners=True)
             loss = self.criterion(prob, target)
             return loss
 
         prob, label = self.regression_layer(feat)
+        prob = F.interpolate(prob, size=(H, W), mode="bilinear", align_corners=True)
+        label = F.interpolate(label, size=(H, W), mode="bilinear", align_corners=True)
         if self.discretization == "SID":
-            t_0 = torch.exp(np.log(self.beta)*label/self.ord_num)
-            t_1 = torch.exp(np.log(self.beta)*(label+1)/self.ord_num)
-            depth = (t_0+t_1)/2-self.gamma
+            t0 = torch.exp(np.log(self.beta) * label / self.ord_num)
+            t1 = torch.exp(np.log(self.beta) * (label + 1) / self.ord_num)
         else:
-            t_0 = 1.0+(self.beta-1.0)*label/self.ord_num
-            t_1 = 1.0+(self.beta-1.0)*(label+1)/self.ord_num
-            depth = (t_0+t_1)/2-self.gamma
+            t0 = 1.0 + (self.beta - 1.0) * label / self.ord_num
+            t1 = 1.0 + (self.beta - 1.0) * (label + 1) / self.ord_num
+        depth = (t0 + t1) / 2 - self.gamma
         return {"depth": depth, "prob": prob, "label": label}

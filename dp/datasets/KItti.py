@@ -21,13 +21,9 @@ class KittiSet(BaseDataset):
 
     def __init__(self, config):
         super().__init__(config)
-        file_list = "kitti_{}".format(self.split)
+        file_list = "./dp/datasets/lists/kitti_{}.list".format(self.split)
         with open(file_list, "r") as f:
             self.filenames = f.readlines()
-        # if self.split == "train" or self.split == "trainval":
-        #     self.preprocess = self._tr_preprocess
-        # else:
-        #     self.preprocess = self._te_preprocess
 
     def _parse_path(self, index):
         if self.split:

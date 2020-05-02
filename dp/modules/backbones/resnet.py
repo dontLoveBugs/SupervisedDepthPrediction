@@ -128,7 +128,8 @@ class ResNetBackbone(nn.Module):
 
         if pretrained:
             # saved_state_dict = torch.load('./network/pretrained_models/resnet101-imagenet.pth')
-            saved_state_dict = torch.load('./pretrained_models/resnet101-imagenet.pth', map_location="cpu")
+            saved_state_dict = torch.load('./dp/modules/backbones/pretrained_models/resnet101-imagenet.pth',
+                                          map_location="cpu")
             new_params = self.backbone.state_dict().copy()
             for i in saved_state_dict:
                 i_parts = i.split('.')

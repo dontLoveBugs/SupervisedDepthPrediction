@@ -25,7 +25,7 @@ class BaseDataset(data.Dataset):
             self.preprocess = self._te_preprocess
 
     def __len__(self):
-        return len(self.file_list)
+        return len(self.filenames)
 
     def __getitem__(self, index):
         image_path, depth_path = self._parse_path(index)
