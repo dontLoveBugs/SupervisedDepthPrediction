@@ -15,12 +15,10 @@ def PILLoader(file):
 
 def KittiDepthLoader(file):
     # loads depth map D from png file
-    # and returns it as a numpy array,
-    # for details see readme.txt
     assert os.path.exists(file), "file not found: {}".format(file)
     from PIL import Image
     img_file = Image.open(file)
-    depth_png = np.array(img_file, dtype=int)
+    depth_png = np.array(img_file, dtype=int)[:, :, 0]
     img_file.close()
     # make sure we have a proper 16bit depth map here.. not 8bit!
     assert np.max(depth_png) > 255, \

@@ -7,7 +7,7 @@
 
 import copy
 import numpy as np
-from dorn.utils.wrappers import check_allfloat, make_iterative_func
+from dp.utils.wrappers import check_allfloat, make_iterative_func
 
 
 class AverageMeter(object):

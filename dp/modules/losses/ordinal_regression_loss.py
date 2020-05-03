@@ -21,8 +21,10 @@ class OrdinalRegressionLoss(object):
         self.discretization = discretization
 
     def _create_ord_label(self, gt):
+        # print("gt shape:", gt.shape)
         N, H, W = gt.shape
-        ord_p0 = torch.ones(N, self.ord_num, H, W).to(gt.device)
+        ord_c0 = torch.ones(N, self.ord_num, H, W).to(gt.device)
+        ord_label = torch.ones(N, self.ord_num*2, H, W).to(gt.device)
         if self.discretization == "SID":
             label = self.ord_num * torch.log(gt) / np.log(self.beta)
         else:
@@ -32,10 +34,11 @@ class OrdinalRegressionLoss(object):
             .view(1, self.ord_num, 1, 1).to(gt.device)
         mask = mask.repeat(N, 1, H, W).contiguous().long()
         mask = (mask > label)
-        ord_p0[mask] = 0
-        ord_p1 = 1 - ord_p0
-        ord_prob = torch.cat((ord_p0, ord_p1), dim=1)
-        return ord_prob
+        ord_c0[mask] = 0
+        ord_c1 = 1 - ord_c0
+        ord_label[:, 0::2, :, :] = ord_c0
+        ord_label[:, 1::2, :, :] = ord_c1
+        return ord_label
 
     def __call__(self, prob, gt):
         """
@@ -44,5 +47,6 @@ class OrdinalRegressionLoss(object):
         :return: loss: loss value, torch.float
         """
         ord_label = self._create_ord_label(gt)
-        loss = prob * ord_label
+        # print("prob shape: {}, ord label shape: {}".format(prob.shape, ord_label.shape))
+        loss = -prob * ord_label
         return loss.mean()

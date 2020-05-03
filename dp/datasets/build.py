@@ -13,7 +13,7 @@ from dp.datasets import _get_dataset
 
 
 def build_loader(config, is_train=True, world_size=1, distributed=False):
-    dataset = _get_dataset(config['data']['name'])(config=config, is_train=is_train)
+    dataset = _get_dataset(config['data']['name'])(config=config["data"], is_train=is_train)
 
     sampler = None
     batch_size = config['solver']['batch_size'] if is_train else world_size

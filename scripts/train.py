@@ -79,7 +79,7 @@ te_loader, _, niter_test = build_loader(config, False, solver.world_size, solver
 """
     usage: debug
 """
-niter_per_epoch, niter_test = 20, 10
+# niter_per_epoch, niter_test = 20, 10
 
 loss_meter = AverageMeter()
 metric = build_metrics(config)

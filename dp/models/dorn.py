@@ -21,7 +21,7 @@ from dp.modules.losses.ordinal_regression_loss import OrdinalRegressionLoss
 
 class DepthPredModel(nn.Module):
 
-    def __init__(self, ord_num, gamma=1.0, beta=80.0, scene="Kitti", discretization="SID", pretrained=True):
+    def __init__(self, ord_num=90, gamma=1.0, beta=80.0, scene="Kitti", discretization="SID", pretrained=True):
         super().__init__()
         self.ord_num = ord_num
         self.gamma = gamma
@@ -39,18 +39,16 @@ class DepthPredModel(nn.Module):
         feat = self.SceneUnderstandingModule(feat)
         if self.training:
             prob = self.regression_layer(feat)
-            prob = F.interpolate(prob, size=(H, W), mode="bilinear", align_corners=True)
             loss = self.criterion(prob, target)
             return loss
 
         prob, label = self.regression_layer(feat)
-        prob = F.interpolate(prob, size=(H, W), mode="bilinear", align_corners=True)
-        label = F.interpolate(label, size=(H, W), mode="bilinear", align_corners=True)
+        # print("prob shape:", prob.shape, " label shape:", label.shape)
         if self.discretization == "SID":
-            t0 = torch.exp(np.log(self.beta) * label / self.ord_num)
-            t1 = torch.exp(np.log(self.beta) * (label + 1) / self.ord_num)
+            t0 = torch.exp(np.log(self.beta) * label.float() / self.ord_num)
+            t1 = torch.exp(np.log(self.beta) * (label.float() + 1) / self.ord_num)
         else:
             t0 = 1.0 + (self.beta - 1.0) * label / self.ord_num
             t1 = 1.0 + (self.beta - 1.0) * (label + 1) / self.ord_num
         depth = (t0 + t1) / 2 - self.gamma
-        return {"depth": depth, "prob": prob, "label": label}
+        return {"target": depth, "prob": prob, "label": label}

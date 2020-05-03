@@ -19,6 +19,7 @@ def log10(x):
 
 @make_nograd_func
 def compute_metric(pred, target):
+    # print("pred shape: {}, target shape: {}".format(pred.shape, target.shape))
     valid_mask = target > 0
     pred = pred[valid_mask]
     target = target[valid_mask]
@@ -62,8 +63,7 @@ def compute_metric(pred, target):
 
 class Metrics(object):
 
-    def __init__(self, max_disp):
-        self.max_disp = max_disp
+    def __init__(self):
 
         # self.irmse = AverageMeterList()
         # self.imae = AverageMeterList()
@@ -100,31 +100,44 @@ class Metrics(object):
         self.n_stage = -1
 
     def compute_metric(self, preds, minibatch):
-        gt = minibatch["depth"]
-        mask = (gt > 0.) & (gt < self.max_disp)
+        gt = minibatch["target"]
+        mask = (gt > 0.)
         if len(gt[mask]) == 0:
             return
 
-        imse, imae, mse, rmse, absrel, lg10, silog, d1, d2, d3 \
-            = [], [], [], [], [], [], [], [], [], []
+        imse, imae, mse, mae, rmse, absrel, lg10, silog, d1, d2, d3 \
+            = [], [], [], [], [], [], [], [], [], [], []
 
         if self.n_stage == -1:
-            self.n_stage = len(preds["depth"])
+            self.n_stage = len(preds["target"])
 
         for scale_idx in range(self.n_stage):
-            pred = preds["depth"][scale_idx]
+            pred = preds["target"][scale_idx]
             metirc_dict = compute_metric(pred, gt)
             metirc_dict = reduce_dict(metirc_dict)
             # imse.append(metirc_dict["imse"])
             # imae.append(metirc_dict["imae"])
             mse.append(metirc_dict["mse"])
+            mae.append(metirc_dict["mae"])
             rmse.append(metirc_dict["rmse"])
             absrel.append(metirc_dict["absrel"])
             # lg10.append(metirc_dict["lg10"])
             silog.append(metirc_dict["silog"])
-            d1.append(metirc_dict["d1"])
-            d2.append(metirc_dict["d2"])
-            d3.append(metirc_dict["d3"])
+            d1.append(metirc_dict["delta1"])
+            d2.append(metirc_dict["delta2"])
+            d3.append(metirc_dict["delta3"])
+
+        # self.imse.update(imse)
+        # self.imae.update(imae)
+        self.mse.update(mse)
+        self.mae.update(mae)
+        self.rmse.update(rmse)
+        self.absrel.update(absrel)
+        # self.lg10.update(lg10)
+        self.silog.update(silog)
+        self.d1.update(d1)
+        self.d2.update(d2)
+        self.d3.update(d3)
 
         del imse
         del imae

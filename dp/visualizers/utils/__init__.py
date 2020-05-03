@@ -7,6 +7,4 @@
 @File    : __init__.py.py
 """
 
-from .utils import disp_err_to_color
-from .utils import disp_to_color
-from .utils import cost_dist_map
+from .utils import error_to_color, depth_to_color

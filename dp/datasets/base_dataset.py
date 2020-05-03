@@ -15,8 +15,8 @@ class BaseDataset(data.Dataset):
     def __init__(self, config, is_train=True, image_loader=None, depth_loader=None):
         super(BaseDataset, self).__init__()
         self.config = config
-        self.root = self.config['data']['path']
-        self.split = self.config["data"]["split"]
+        self.root = self.config['path']
+        self.split = self.config["split"]
         self.split = self.split[0] if is_train else self.split[1]
         self.image_loader, self.depth_loader = image_loader, depth_loader
         if is_train:
@@ -41,8 +41,8 @@ class BaseDataset(data.Dataset):
                            n=self.get_length())
 
         if depth is not None:
-            output_dict['depth'] = torch.from_numpy(np.ascontiguousarray(depth)).float()
-            output_dict['depth_path'] = depth_path
+            output_dict['target'] = torch.from_numpy(np.ascontiguousarray(depth)).float()
+            output_dict['target_path'] = depth_path
 
         if extra_dict is not None:
             output_dict.update(**extra_dict)

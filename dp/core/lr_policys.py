@@ -81,19 +81,22 @@ class WarmUpLR(_LRScheduler):
 
 class PolyLR(_LRScheduler):
 
-    def __init__(self, optimizer, gamma=0.9, num_iteration=-1):
-        self.step_size = num_iteration
+    def __init__(self, optimizer, gamma=0.9, n_iteration=-1):
+        self.step_size = n_iteration
         self.gamma = gamma
         super(PolyLR, self).__init__(optimizer)
 
     def get_lr(self):
-        return [base_lr * (self._step_count / self.step_size)**self.gamma for base_lr in self.base_lrs]
+        decay = 1-self._step_count / float(self.step_size)
+        decay = max(0., decay) ** self.gamma
+        return [base_lr * decay for base_lr in self.base_lrs]
 
 
 __schedulers__ = {
     'step': StepLR,
     'multi_step': MultiStepLR,
     'constant': ConstantLR,
+    'poly': PolyLR
 }
 
 
@@ -117,6 +120,11 @@ def _get_lr_policy(config, optimizer):
 
     if config['name'] == 'constant':
         scheduler = __schedulers__[config['name']](optimizer)
+
+    if config['name'] == 'poly':
+        scheduler = __schedulers__[config['name']](optimizer,
+                                                   gamma=config["params"]["gamma"],
+                                                   n_iteration=config["params"]["n_iteration"])
 
     if config.get('warm_up') is not None:
         scheduler = WarmUpLR(optimizer=optimizer, scheduler=scheduler, **config["warm_up"])

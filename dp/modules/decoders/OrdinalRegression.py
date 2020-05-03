@@ -28,16 +28,20 @@ class OrdinalRegressionLayer(nn.Module):
         A = x[:, ::2, :, :]
         B = x[:, 1::2, :, :]
 
-        A = A.view(N, 1, ord_num * H * W)
-        B = B.view(N, 1, ord_num * H * W)
-        concat_feats = torch.cat((A, B), dim=1).contiguous()
+        # A = A.reshape(N, 1, ord_num * H * W)
+        # B = B.reshape(N, 1, ord_num * H * W)
+        A = A.unsqueeze(dim=1)
+        B = B.unsqueeze(dim=1)
+        concat_feats = torch.cat((A, B), dim=1)
 
         if self.training:
-            ord_prob = F.log_softmax(concat_feats, dim=1)
-            return ord_prob.view(-1, ord_num, H, W)
+            prob = F.log_softmax(concat_feats, dim=1)
+            ord_prob = x.clone()
+            ord_prob[:, 0::2, :, :] = prob[:, 0, :, :, :]
+            ord_prob[:, 1::2, :, :] = prob[:, 1, :, :, :]
+            return ord_prob
 
-        ord_prob = F.softmax(C, dim=1)[:, 1, ::]
-        ord_prob = ord_prob.view(-1, ord_num, H, W)
-        ord_label = torch.sum((ord_prob > 0.5), dim=1).view(-1, 1, H, W)
+        ord_prob = F.softmax(concat_feats, dim=1)[:, 0, ::]
+        ord_label = torch.sum((ord_prob > 0.5), dim=1).reshape((N, 1, H, W))
         return ord_prob, ord_label
 

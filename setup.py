@@ -15,5 +15,5 @@ setup(
         version='1.0',
         description='Depth Prediction',
         author='wangxin',
-        packages=find_packages(exclude=["scripts"])
+        packages=find_packages(exclude=["scripts", "test"])
 )

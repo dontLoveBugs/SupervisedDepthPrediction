@@ -10,4 +10,4 @@
 
 def build_metrics(cfg):
     mod = __import__("{}.{}".format(__name__, "metrics"), fromlist=[''])
-    return getattr(mod, "StereoMetrics")(max_disp=cfg["model"]["params"]["max_disp"])
+    return getattr(mod, "Metrics")()

@@ -23,14 +23,14 @@ import torch
 import torch.distributed as dist
 import torch.backends.cudnn as cudnn
 from torch.nn.utils import clip_grad_norm_
-from dorn.utils.comm import reduce_tensor
-from dorn.utils.pyt_io import load_model
-from dorn.apis.lr_policys import _get_lr_policy
-from dorn.apis.optimizers import _get_optimizer
-from dorn.models import _get_model
-from dorn.utils.comm import synchronize
-from dorn.utils.wrappers import tensor2cuda
-from dorn.version import __version__
+from dp.utils.comm import reduce_tensor
+from dp.utils.pyt_io import load_model
+from dp.core.lr_policys import _get_lr_policy
+from dp.core.optimizers import _get_optimizer
+from dp.models import _get_model
+from dp.utils.comm import synchronize
+from dp.utils.wrappers import tensor2cuda
+from dp.version import __version__
 
 try:
     from apex import amp

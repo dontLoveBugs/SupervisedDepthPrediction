@@ -10,7 +10,7 @@ model:
     beta: 90.0
     scene: "Kitti"
     discretization: "SID"
-    pretrained: False
+    pretrained: True
 data:
   name: "Kitti"
   split: ["trainval", "selected_val"]
@@ -21,19 +21,20 @@ data:
 solver:
   epochs: 14
   batch_size: 4
+  step_decay: 1
   optimizer:
     name: 'SGD'
     params:
-      lr: 0.0001
+      lr: 0.001
       momentum: 0.9
       weight_decay: 0.0005
   lr_policy:
-    name: 'Poly'
+    name: 'poly'
     params:
       gamma: 0.9
-      num_iteration: 300636
+      n_iteration: 300636
 apex:
-  amp_used: True
+  amp_used: False
   opt_level: "O1"
   keep_batchnorm_fp32:
   loss_scale:
