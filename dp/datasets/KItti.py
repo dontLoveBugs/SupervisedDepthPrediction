@@ -40,8 +40,9 @@ class Kitti(BaseDataset):
         W = int(crop_h / H * W)
         H = crop_h
         # print("w={}, h={}".format(W, H))
-        image.resize((W, H), Image.BILINEAR)
+        image = image.resize((W, H), Image.BILINEAR)
         depth = cv2.resize(depth, (W, H), cv2.INTER_LINEAR)
+        # print("image shape:", image.size, " depth shape:", depth.shape)
 
         # random crop size
         x = random.randint(0, W - crop_w)
@@ -62,14 +63,14 @@ class Kitti(BaseDataset):
         W, H = image.size
         W = int(crop_h / H * W)
         H = crop_h
-        image.resize((crop_w, H), Image.BILINEAR)
+        image = image.resize((W, H), Image.BILINEAR)
         depth = cv2.resize(depth, (W, H), cv2.INTER_LINEAR)
 
         # center crop
         x = (W - crop_w) // 2
         y = (H - crop_h) // 2
         image = image.crop((x, y, x + crop_w, y + crop_h))
-        depth =depth[y:y + crop_h, x:x + crop_w]
+        depth = depth[y:y + crop_h, x:x + crop_w]
 
         # normalize
         image_n = np.array(image).astype(np.float32)

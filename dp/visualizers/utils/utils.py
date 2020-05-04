@@ -18,8 +18,10 @@ def depth_to_color(depth):
 
 
 def error_to_color(depth, gt):
+    mask = gt <= 0.
     cmap = plt.cm.Greys
     err = np.abs(depth-gt)
+    err[mask] = 0.
     err_min = np.min(err)
     err_max = np.max(err)
     err_rel = (err-err_min) / (err_max-err_min)

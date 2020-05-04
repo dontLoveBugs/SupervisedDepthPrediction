@@ -20,6 +20,7 @@ def log10(x):
 @make_nograd_func
 def compute_metric(pred, target):
     # print("pred shape: {}, target shape: {}".format(pred.shape, target.shape))
+    assert pred.shape == target.shape, "pred'shape must be same with target."
     valid_mask = target > 0
     pred = pred[valid_mask]
     target = target[valid_mask]
@@ -155,7 +156,7 @@ class Metrics(object):
             return
         keys = ["stage_{}".format(i) for i in range(self.n_stage)]
         writer.add_scalars(tag + "/mse", dict(zip(keys, self.mse.mean())), epoch)
-        writer.add_scalars(tag + "/rmse", dict(zip(keys, self.rmse.mean())))
+        writer.add_scalars(tag + "/rmse", dict(zip(keys, self.rmse.mean())), epoch)
         writer.add_scalars(tag + "/mae", dict(zip(keys, self.mae.mean())), epoch)
         writer.add_scalars(tag + "/absrml", dict(zip(keys, self.absrel.mean())), epoch)
         writer.add_scalars(tag + "/silog", dict(zip(keys, self.silog.mean())), epoch)

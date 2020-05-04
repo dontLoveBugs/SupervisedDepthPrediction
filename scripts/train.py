@@ -79,7 +79,7 @@ te_loader, _, niter_test = build_loader(config, False, solver.world_size, solver
 """
     usage: debug
 """
-# niter_per_epoch, niter_test = 20, 10
+# niter_per_epoch, niter_test = 200, 20
 
 loss_meter = AverageMeter()
 metric = build_metrics(config)
@@ -162,7 +162,7 @@ for epoch in range(solver.epoch + 1, config['solver']['epochs'] + 1):
         """
         visualization for model output and feature maps.
         """
-        if is_main_process and idx == 0:
+        if is_main_process and idx % 10 == 0:
             visualizer.visualize(minibatch, pred, epoch=epoch)
 
     if is_main_process:

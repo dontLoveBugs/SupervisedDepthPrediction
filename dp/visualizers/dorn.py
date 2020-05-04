@@ -20,7 +20,7 @@ class dorn_visualizer(BaseVisualizer):
     def visualize(self, batch, out, epoch=0):
         """
             :param batch_in: minibatch
-            :param pred_out: model output for visualization, N, 1, H, W
+            :param pred_out: model output for visualization, dic, {"target": [NxHxW]}
             :param tensorboard: if tensorboard = True, the visualized image should be in [0, 1].
             :return: vis_ims: image for visualization.
             """
@@ -32,10 +32,9 @@ class dorn_visualizer(BaseVisualizer):
             depth_gts = tensor2numpy(batch["target"])
             has_gt = True
 
-        axis = 1 if self.config["horizontally"] else 0
         for i in range(len(fn)):
             image = image[i].astype(np.float)
-            depth = tensor2numpy(out['target'][i])[0]
+            depth = tensor2numpy(out['target'][0][i])
             # print("!! depth shape:", depth.shape)
 
             if has_gt:
@@ -46,11 +45,11 @@ class dorn_visualizer(BaseVisualizer):
 
             depth = depth_to_color(depth)
             # print("pred:", depth.shape, " target:", depth_gt.shape)
-            group = np.concatenate((image, depth), axis)
+            group = np.concatenate((image, depth), axis=0)
 
             if has_gt:
-                group = np.concatenate((group, depth_gt), axis)
-                group = np.concatenate((group, err), axis)
+                gt_group = np.concatenate((depth_gt, err), axis=0)
+                group = np.concatenate((group, gt_group), axis=1)
 
             if self.writer is not None:
                 group = group.transpose((2, 0, 1)) / 255.0

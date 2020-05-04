@@ -103,8 +103,12 @@ class Solver(object):
         # model and optimizer
         self.model = _get_model(self.config)
         self.filtered_keys = [p.name for p in inspect.signature(self.model.forward).parameters.values()]
-        logging.info("filtered keys:{}".format(self.filtered_keys))
-        model_params = filter(lambda p: p.requires_grad, self.model.parameters())
+        # logging.info("filtered keys:{}".format(self.filtered_keys))
+        # model_params = filter(lambda p: p.requires_grad, self.model.parameters())
+        model_params = []
+        for params in self.model.optimizer_params():
+            params["lr"] = self.config["solver"]["optimizer"]["params"]["lr"] * params["lr"]
+            model_params.append(params)
         self.optimizer = _get_optimizer(config['solver']['optimizer'],
                                         model_params=model_params)
 
@@ -144,7 +148,11 @@ class Solver(object):
         self._build_environ()
         self.model = _get_model(self.config)
         self.filtered_keys = [p.name for p in inspect.signature(self.model).parameters.values()]
-        model_params = filter(lambda p: p.requires_grad, self.model.parameters())
+        # model_params = filter(lambda p: p.requires_grad, self.model.parameters())
+        model_params = []
+        for params in self.model.optimizer_params():
+            params["lr"] = self.config["solver"]["optimizer"]["params"]["lr"] * params["lr"]
+            model_params.append(params)
         self.optimizer = _get_optimizer(self.config['solver']['optimizer'],
                                         model_params=model_params)
         self.lr_policy = _get_lr_policy(self.config['solver']['lr_policy'], optimizer=self.optimizer)

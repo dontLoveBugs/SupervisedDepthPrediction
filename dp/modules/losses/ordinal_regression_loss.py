@@ -10,8 +10,6 @@
 import numpy as np
 import torch
 
-import torch.nn.functional as F
-
 
 class OrdinalRegressionLoss(object):
 
@@ -21,10 +19,10 @@ class OrdinalRegressionLoss(object):
         self.discretization = discretization
 
     def _create_ord_label(self, gt):
-        # print("gt shape:", gt.shape)
         N, H, W = gt.shape
+        # print("gt shape:", gt.shape)
+
         ord_c0 = torch.ones(N, self.ord_num, H, W).to(gt.device)
-        ord_label = torch.ones(N, self.ord_num*2, H, W).to(gt.device)
         if self.discretization == "SID":
             label = self.ord_num * torch.log(gt) / np.log(self.beta)
         else:
@@ -36,9 +34,13 @@ class OrdinalRegressionLoss(object):
         mask = (mask > label)
         ord_c0[mask] = 0
         ord_c1 = 1 - ord_c0
-        ord_label[:, 0::2, :, :] = ord_c0
-        ord_label[:, 1::2, :, :] = ord_c1
-        return ord_label
+        # implementation according to the paper.
+        # ord_label = torch.ones(N, self.ord_num * 2, H, W).to(gt.device)
+        # ord_label[:, 0::2, :, :] = ord_c0
+        # ord_label[:, 1::2, :, :] = ord_c1
+        # reimplementation for fast speed.
+        ord_label = torch.cat((ord_c0, ord_c1), dim=1)
+        return ord_label, mask
 
     def __call__(self, prob, gt):
         """
@@ -46,7 +48,10 @@ class OrdinalRegressionLoss(object):
         :param gt: depth ground truth, NXHxW, torch.Tensor
         :return: loss: loss value, torch.float
         """
-        ord_label = self._create_ord_label(gt)
+        # N, C, H, W = prob.shape
+        valid_mask = gt > 0.
+        ord_label, mask = self._create_ord_label(gt)
         # print("prob shape: {}, ord label shape: {}".format(prob.shape, ord_label.shape))
-        loss = -prob * ord_label
+        entropy = -prob * ord_label
+        loss = torch.sum(entropy, dim=1)[valid_mask]
         return loss.mean()

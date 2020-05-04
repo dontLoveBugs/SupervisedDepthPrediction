@@ -8,7 +8,10 @@ model:
     ord_num: 90
     gamma: -0.97
     beta: 90.0
-    scene: "Kitti"
+    input_size: [385, 513]
+    kernel_size: 16
+    pyramid: [8, 12, 16]
+    batch_norm: False
     discretization: "SID"
     pretrained: True
 data:
@@ -25,7 +28,7 @@ solver:
   optimizer:
     name: 'SGD'
     params:
-      lr: 0.001
+      lr: 0.0001
       momentum: 0.9
       weight_decay: 0.0005
   lr_policy:
@@ -40,7 +43,6 @@ apex:
   loss_scale:
 vis_config:
   name: "dorn"
-  horizontally: False
 snap:
   path: "/data/snap_dir/monodepth"
 
