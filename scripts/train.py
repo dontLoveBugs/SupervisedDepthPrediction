@@ -29,7 +29,7 @@ from dp.utils.config import load_config, print_config
 from dp.utils.pyt_io import create_summary_writer
 from dp.metircs import build_metrics
 from dp.core.solver import Solver
-from dp.datasets.build import build_loader
+from dp.datasets.loader import build_loader
 from dp.visualizers import build_visualizer
 
 parser = argparse.ArgumentParser(description='Training script')
@@ -115,7 +115,7 @@ for epoch in range(solver.epoch + 1, config['solver']['epochs'] + 1):
         if is_main_process:
             print_str = '[Train] Epoch{}/{}'.format(epoch, config['solver']['epochs']) \
                         + ' Iter{}/{}:'.format(idx + 1, niter_per_epoch) \
-                        + ' lr=%.4f' % solver.get_learning_rates()[0] \
+                        + ' lr=%.8f' % solver.get_learning_rates()[0] \
                         + ' losses=%.2f' % loss.item() \
                         + '(%.2f)' % loss_meter.mean() \
                         + ' IO:%.2f' % io_time \
