@@ -10,6 +10,8 @@
 import numpy as np
 import torch
 
+import torch.nn.functional as F
+
 
 class OrdinalRegressionLoss(object):
 
@@ -19,7 +21,7 @@ class OrdinalRegressionLoss(object):
         self.discretization = discretization
 
     def _create_ord_label(self, gt):
-        N, H, W = gt.shape
+        N, _, H, W = gt.shape
         # print("gt shape:", gt.shape)
 
         ord_c0 = torch.ones(N, self.ord_num, H, W).to(gt.device)
@@ -48,8 +50,12 @@ class OrdinalRegressionLoss(object):
         :param gt: depth ground truth, NXHxW, torch.Tensor
         :return: loss: loss value, torch.float
         """
+        if prob.shape != gt.shape:
+            F.interpolate(prob, size=gt.shape[-2:], mode="nearest")
+
         # N, C, H, W = prob.shape
         valid_mask = gt > 0.
+        gt = torch.unsqueeze(gt, dim=1)
         ord_label, mask = self._create_ord_label(gt)
         # print("prob shape: {}, ord label shape: {}".format(prob.shape, ord_label.shape))
         entropy = -prob * ord_label

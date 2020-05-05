@@ -10,7 +10,7 @@ import numpy as np
 
 from dp.visualizers.utils import depth_to_color, error_to_color
 from dp.visualizers.base_visualizer import BaseVisualizer
-from dp.utils.wrappers import tensor2numpy
+from dp.utils.wrappers import tensor2numpy, interpolate
 
 
 class dorn_visualizer(BaseVisualizer):
@@ -25,6 +25,11 @@ class dorn_visualizer(BaseVisualizer):
             :return: vis_ims: image for visualization.
             """
         fn = batch["fn"]
+        if batch["target"].shape != out["target"][-1].shape:
+            h, w = batch["target"].shape[-2:]
+            # batch = interpolate(batch, size=(h, w), mode='nearest')
+            out = interpolate(out, size=(h, w), mode='nearest')
+
         image = batch["image_n"].numpy()
 
         has_gt = False
@@ -53,4 +58,6 @@ class dorn_visualizer(BaseVisualizer):
 
             if self.writer is not None:
                 group = group.transpose((2, 0, 1)) / 255.0
+                group = group.astype(np.float32)
+                # print("group shape:", group.shape)
                 self.writer.add_image(fn[i] + "/image", group, epoch)

@@ -9,20 +9,21 @@
 
 from __future__ import print_function, division
 import torch
+import torch.nn.functional as F
 import torch.utils.data
 import numpy as np
 
 
 def make_iterative_func(func):
-    def wrapper(vars):
+    def wrapper(vars, **f_kwargs):
         if isinstance(vars, list):
-            return [wrapper(x) for x in vars]
+            return [wrapper(x, **f_kwargs) for x in vars]
         elif isinstance(vars, tuple):
-            return tuple([wrapper(x) for x in vars])
+            return tuple([wrapper(x, **f_kwargs) for x in vars])
         elif isinstance(vars, dict):
-            return {k: wrapper(v) for k, v in vars.items()}
+            return {k: wrapper(v, **f_kwargs) for k, v in vars.items()}
         else:
-            return func(vars)
+            return func(vars, **f_kwargs)
 
     return wrapper
 
@@ -71,3 +72,15 @@ def check_nan(vars):
 def tensor2cuda(vars):
     assert isinstance(vars, torch.Tensor), "Type of vars must be Torch.tensor"
     return vars.cuda(non_blocking=True)
+
+
+@make_iterative_func
+def interpolate(vars, size=None, scale_factor=None, mode='nearest', align_corners=None):
+    # print("!!!size:", size)
+    if not isinstance(vars, torch.Tensor) or vars.dim() < 3:
+        return vars
+    if vars.dim()==3:
+        out = torch.unsqueeze(vars, dim=1)
+        out = F.interpolate(out, size, scale_factor, mode, align_corners)
+        return out.squeeze(dim=1)
+    return F.interpolate(vars, size, scale_factor, mode, align_corners)

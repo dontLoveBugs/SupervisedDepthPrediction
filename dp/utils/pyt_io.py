@@ -10,7 +10,10 @@ import logging
 from collections import OrderedDict
 
 import torch
-from torch.utils.tensorboard import SummaryWriter
+if torch.__version__ >= "1.2.0":
+    from torch.utils.tensorboard import SummaryWriter
+else:
+    from tensorboardX import SummaryWriter
 
 logging.basicConfig(format='[%(asctime)s %(levelname)s] %(message)s',
                     datefmt='%m/%d/%Y %H:%M:%S',

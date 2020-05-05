@@ -24,7 +24,7 @@ def conv3x3(in_planes, out_planes, stride=1):
 class Bottleneck(nn.Module):
     expansion = 4
 
-    def __init__(self, inplanes, planes, stride=1, dilation=1, downsample=None, fist_dilation=1, multi_grid=1):
+    def __init__(self, inplanes, planes, stride=1, dilation=1, downsample=None, multi_grid=1):
         super(Bottleneck, self).__init__()
         self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=1, bias=False)
         self.bn1 = BatchNorm2d(planes)
@@ -63,22 +63,30 @@ class Bottleneck(nn.Module):
 
 
 class ResNet(nn.Module):
-    def __init__(self, block, layers):
-        self.inplanes = 128
+    def __init__(self, block, layers, deep_stem=True):
         super(ResNet, self).__init__()
-        self.conv1 = conv3x3(3, 64, stride=2)
-        self.bn1 = BatchNorm2d(64)
-        self.relu1 = nn.ReLU(inplace=False)
-        self.conv2 = conv3x3(64, 64)
-        self.bn2 = BatchNorm2d(64)
-        self.relu2 = nn.ReLU(inplace=False)
-        self.conv3 = conv3x3(64, 128)
-        self.bn3 = BatchNorm2d(128)
-        self.relu3 = nn.ReLU(inplace=False)
-        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+        self.deep_stem = deep_stem
+        if deep_stem:
+            self.inplanes = 128
+            self.conv1 = nn.Sequential(
+                conv3x3(3, 64, stride=2),
+                BatchNorm2d(64),
+                nn.ReLU(inplace=True),
+                conv3x3(64, 64),
+                BatchNorm2d(64),
+                nn.ReLU(inplace=True),
+                conv3x3(64, 128),
+                BatchNorm2d(128),
+                nn.ReLU(inplace=True)
+            )
+        else:
+            self.inplanes = 64
+            self.conv1 = nn.Conv2d(3, self.inplanes, kernel_size=7, stride=2, padding=3, bias=False)
+        self.bn1 = BatchNorm2d(self.inplanes)
+        self.relu1 = nn.ReLU(inplace=True)
 
-        self.relu = nn.ReLU(inplace=False)
-        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1, ceil_mode=True)  # change
+        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+        # self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1, ceil_mode=True)  # change
         self.layer1 = self._make_layer(block, 64, layers[0])
         self.layer2 = self._make_layer(block, 128, layers[1], stride=2)
         self.layer3 = self._make_layer(block, 256, layers[2], stride=1, dilation=2)
@@ -104,15 +112,14 @@ class ResNet(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
-        x = self.relu1(self.bn1(self.conv1(x)))
-        x = self.relu2(self.bn2(self.conv2(x)))
-        x = self.relu3(self.bn3(self.conv3(x)))
-        x = self.maxpool(x)
-        x = self.layer1(x)
-        x = self.layer2(x)
-        x = self.layer3(x)
-        x = self.layer4(x)
-        return x
+        x0 = self.relu1(self.bn1(self.conv1(x)))
+        x1 = self.maxpool(x0)
+        x2 = self.layer1(x1)
+        x3 = self.layer2(x2)
+        x4 = self.layer3(x3)
+        x5 = self.layer4(x4)
+        feats = dict(conv_feat=x0, pool_feat=x1, layer1_feat=x2, layer2_feat=x3, layer3_feat=x4, layer4_feat=x5)
+        return feats
 
     def freeze(self):
         for m in self.modules():
@@ -128,7 +135,7 @@ class ResNetBackbone(nn.Module):
 
         if pretrained:
             # saved_state_dict = torch.load('./network/pretrained_models/resnet101-imagenet.pth')
-            saved_state_dict = torch.load('./dp/modules/backbones/pretrained_models/resnet101-imagenet.pth',
+            saved_state_dict = torch.load('./dp/modules/backbones/pretrained_models/resnet101_v1c.pth',
                                           map_location="cpu")
             new_params = self.backbone.state_dict().copy()
             for i in saved_state_dict:

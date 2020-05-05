@@ -217,8 +217,7 @@ class Solver(object):
                 clip_grad_norm_(self.model.parameters(), **self.grad_clip_params)
             self.optimizer.step()
             self.optimizer.zero_grad()
-
-            self.lr_policy.step()
+            self.lr_policy.step(self.epoch)
 
         if self.distributed:
             reduced_loss = reduce_tensor(loss.data, self.world_size)
@@ -236,10 +235,10 @@ class Solver(object):
         self.iteration = 0
         self.epoch = epoch
         self.model.train()
-        self.lr_policy.step(epoch)
+        # self.lr_policy.step(epoch)
         torch.cuda.empty_cache()
 
-    def after_epoch(self, epoch):
+    def after_epoch(self, epoch=None):
         synchronize()
         self.model.eval()
         # gc.collect()
