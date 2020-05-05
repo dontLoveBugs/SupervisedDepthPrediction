@@ -20,7 +20,7 @@ data:
   path: '/data/wangxin/KITTI'
   tr_crop_size: [385, 513]
   te_crop_size: [385, 513]
-  imagenet_normalize: True
+  norm_type: "imagenet-norm"
 solver:
   epochs: 14
   batch_size: 4

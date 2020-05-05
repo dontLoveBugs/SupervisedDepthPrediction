@@ -8,9 +8,9 @@
 """
 
 import os
+import math
 import random
 import numpy as np
-import cv2
 
 
 from PIL import Image
@@ -37,22 +37,33 @@ class Kitti(BaseDataset):
         crop_h, crop_w = self.config["tr_crop_size"]
         # resize
         W, H = image.size
-        W = int(crop_h / H * W)
-        H = crop_h
+        dH, dW = depth.shape
+
+        assert W == dW and H == dH, \
+            "image shape should be same with depth, but image shape is {}, depth shape is {}".format((H, W), (dH, dW))
+
+        scale_h, scale_w = max(crop_h/H, 1.0), max(crop_w/W, 1.0)
+        scale = max(scale_h, scale_w)
+        # H, W = math.ceil(scale*H), math.ceil(scale*W)
+        H, W = max(int(scale*H), crop_h), max(int(scale*W), crop_w)
+
         # print("w={}, h={}".format(W, H))
         image = image.resize((W, H), Image.BILINEAR)
-        depth = cv2.resize(depth, (W, H), cv2.INTER_LINEAR)
+        # depth = cv2.resize(depth, (W, H), cv2.INTER_LINEAR)
         # print("image shape:", image.size, " depth shape:", depth.shape)
 
+        crop_dh, crop_dw = int(crop_h / scale), int(crop_w / scale)
         # random crop size
         x = random.randint(0, W - crop_w)
         y = random.randint(0, H - crop_h)
+        dx, dy = math.ceil(x/scale), math.ceil(y/scale)
+
         image = image.crop((x, y, x + crop_w, y + crop_h))
-        depth = depth[y:y + crop_h, x:x + crop_w]
+        depth = depth[dy:dy + crop_dh, dx:dx + crop_dw]
 
         # normalize
         image = np.asarray(image).astype(np.float32) / 255.0
-        image = nomalize(image, imagenet=self.config['imagenet_normalize'])
+        image = nomalize(image, type=self.config['norm_type'])
         image = image.transpose(2, 0, 1)
 
         return image, depth, None
@@ -61,21 +72,35 @@ class Kitti(BaseDataset):
         crop_h, crop_w = self.config["te_crop_size"]
         # resize
         W, H = image.size
-        W = int(crop_h / H * W)
-        H = crop_h
+        dH, dW = depth.shape
+
+        assert W == dW and H == dH, \
+            "image shape should be same with depth, but image shape is {}, depth shape is {}".format((H, W), (dH, dW))
+
+        scale_h, scale_w = max(crop_h/H, 1.0), max(crop_w/W, 1.0)
+        scale = max(scale_h, scale_w)
+        # H, W = math.ceil(scale*H), math.ceil(scale*W)
+        H, W = max(int(scale*H), crop_h), max(int(scale*W), crop_w)
+
+        image_n = image.copy()
         image = image.resize((W, H), Image.BILINEAR)
-        depth = cv2.resize(depth, (W, H), cv2.INTER_LINEAR)
+        crop_dh, crop_dw = math.ceil(crop_h/scale), math.ceil(crop_w/scale)
+        # depth = cv2.resize(depth, (W, H), cv2.INTER_LINEAR)
 
         # center crop
         x = (W - crop_w) // 2
         y = (H - crop_h) // 2
+        dx = (dW - crop_dw) // 2
+        dy = (dH - crop_dh) // 2
+
         image = image.crop((x, y, x + crop_w, y + crop_h))
-        depth = depth[y:y + crop_h, x:x + crop_w]
+        depth = depth[dy:dy + crop_dh, dx:dx + crop_dw]
+        image_n = image_n.crop((dx, dy, dx + crop_dw, dy + crop_dh))
 
         # normalize
-        image_n = np.array(image).astype(np.float32)
+        image_n = np.array(image_n).astype(np.float32)
         image = np.asarray(image).astype(np.float32) / 255.0
-        image = nomalize(image, imagenet=self.config['imagenet_normalize'])
+        image = nomalize(image, type=self.config['norm_type'])
         image = image.transpose(2, 0, 1)
 
         output_dict = {"image_n": image_n}

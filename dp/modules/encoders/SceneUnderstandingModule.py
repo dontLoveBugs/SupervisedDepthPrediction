@@ -14,10 +14,10 @@ from dp.modules.layers.basic_layers import conv_bn_relu
 
 
 class FullImageEncoder(nn.Module):
-    def __init__(self, h, w, kernel_size):
+    def __init__(self, h, w, kernel_size, dropout_prob=0.5):
         super(FullImageEncoder, self).__init__()
         self.global_pooling = nn.AvgPool2d(kernel_size, stride=kernel_size, padding=kernel_size // 2)  # KITTI 16 16
-        self.dropout = nn.Dropout2d(p=0.5)
+        self.dropout = nn.Dropout2d(p=dropout_prob)
         self.h = h // kernel_size + 1
         self.w = w // kernel_size + 1
         # print("h=", self.h, " w=", self.w, h, w)
@@ -41,14 +41,14 @@ class FullImageEncoder(nn.Module):
 
 
 class SceneUnderstandingModule(nn.Module):
-    def __init__(self, ord_num, size, kernel_size, pyramid=[6, 12, 18], batch_norm=False):
+    def __init__(self, ord_num, size, kernel_size, pyramid=[6, 12, 18], dropout_prob=0.5, batch_norm=False):
         # pyramid kitti [6, 12, 18] nyu [4, 8, 12]
         super(SceneUnderstandingModule, self).__init__()
         assert len(size) == 2
         assert len(pyramid) == 3
         self.size = size
         h, w = self.size
-        self.encoder = FullImageEncoder(h // 8, w // 8, kernel_size)
+        self.encoder = FullImageEncoder(h // 8, w // 8, kernel_size, dropout_prob)
         self.aspp1 = nn.Sequential(
             conv_bn_relu(batch_norm, 2048, 512, kernel_size=1, padding=0),
             conv_bn_relu(batch_norm, 512, 512, kernel_size=1, padding=0)
@@ -66,10 +66,10 @@ class SceneUnderstandingModule(nn.Module):
             conv_bn_relu(batch_norm, 512, 512, kernel_size=1, padding=0)
         )
         self.concat_process = nn.Sequential(
-            nn.Dropout2d(p=0.5),
+            nn.Dropout2d(p=dropout_prob),
             conv_bn_relu(batch_norm, 512 * 5, 2048, kernel_size=1, padding=0),
-            nn.Dropout2d(p=0.5),
-            nn.Conv2d(2048, ord_num * 2, 1)
+            nn.Dropout2d(p=dropout_prob),
+            nn.Conv2d(2048, int(ord_num * 2), 1)
         )
 
     def forward(self, x):

@@ -29,7 +29,7 @@ from dp.core.lr_policys import _get_lr_policy
 from dp.core.optimizers import _get_optimizer
 from dp.models import _get_model
 from dp.utils.comm import synchronize
-from dp.utils.wrappers import tensor2cuda
+from dp.utils.pyt_ops import tensor2cuda
 from dp.version import __version__
 
 try:

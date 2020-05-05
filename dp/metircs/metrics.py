@@ -8,6 +8,7 @@ import math
 import torch
 
 from dp.utils.wrappers import make_nograd_func
+from dp.utils.pyt_ops import interpolate
 from dp.utils.comm import reduce_dict
 from dp.metircs.average_meter import AverageMeterList
 
@@ -18,32 +19,41 @@ def log10(x):
 
 
 @make_nograd_func
-def compute_metric(pred, target):
+def compute_metric(output, target):
     # print("pred shape: {}, target shape: {}".format(pred.shape, target.shape))
-    assert pred.shape == target.shape, "pred'shape must be same with target."
+    assert output.shape == target.shape, "pred'shape must be same with target."
     valid_mask = target > 0
-    pred = pred[valid_mask]
+    output = output[valid_mask]
     target = target[valid_mask]
 
-    abs_diff = (pred - target).abs()
+    abs_diff = (output - target).abs()
 
     mse = (torch.pow(abs_diff, 2)).mean()
     rmse = torch.sqrt(mse)
     mae = abs_diff.mean()
     absrel = (abs_diff / target).mean()
 
-    d = log10(pred) - log10(target)
-    lg10 = d.abs().mean()
-    silog = torch.pow(d, 2).mean() - d.mean() * d.mean()
+    lg10 = torch.abs(log10(output) - log10(target)).mean()
 
-    maxRatio = torch.max(pred / target, target / pred)
+    err_log = torch.log(target) - torch.log(output)
+    normalized_squared_log = (err_log ** 2).mean()
+    log_mean = err_log.mean()
+    silog = torch.sqrt(normalized_squared_log - log_mean * log_mean) * 100
+
+    maxRatio = torch.max(output / target, target / output)
     delta1 = (maxRatio < 1.25).float().mean()
     delta2 = (maxRatio < 1.25 ** 2).float().mean()
     delta3 = (maxRatio < 1.25 ** 3).float().mean()
 
-    inv_output = 1 / pred
-    inv_target = 1 / target
-    abs_inv_diff = (inv_output - inv_target).abs()
+    # inv_output = 1 / pred
+    # inv_target = 1 / target
+    # abs_inv_diff = (inv_output - inv_target).abs()
+    # irmse = torch.sqrt((torch.pow(abs_inv_diff, 2)).mean())
+    # imae = abs_inv_diff.mean()
+
+    inv_output_km = (1e-3 * output) ** (-1)
+    inv_target_km = (1e-3 * target) ** (-1)
+    abs_inv_diff = (inv_output_km - inv_target_km).abs()
     irmse = torch.sqrt((torch.pow(abs_inv_diff, 2)).mean())
     imae = abs_inv_diff.mean()
 
@@ -101,6 +111,10 @@ class Metrics(object):
         self.n_stage = -1
 
     def compute_metric(self, preds, minibatch):
+        if minibatch["target"].shape != preds["target"][-1].shape:
+            h, w = minibatch["target"].shape[-2:]
+            # minibatch = interpolate(minibatch, size=(h, w), mode='bilinear', align_corners=True)
+            preds = interpolate(preds, size=(h, w), mode='bilinear', align_corners=True)
         gt = minibatch["target"]
         mask = (gt > 0.)
         if len(gt[mask]) == 0:

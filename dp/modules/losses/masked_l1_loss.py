@@ -7,7 +7,7 @@
 @File    : masked_l1_loss.py
 """
 
-from dp.utils.wrappers import interpolate
+from dp.utils.pyt_ops import interpolate
 
 
 class MaskedL1Loss(object):
@@ -20,7 +20,7 @@ class MaskedL1Loss(object):
             "inconsistent dimensions, pred shape is {}, but gt shape is {}.".format(pred.shape, gt.shape)
 
         if pred.shape != gt.shape:
-            pred = interpolate(pred, size=gt.shape[-2:], mode="nearest")
+            pred = interpolate(pred, size=gt.shape[-2:], mode="bilinear", align_corners=True)
 
         valid_mask = (gt > 0).detach()
         diff = gt - pred

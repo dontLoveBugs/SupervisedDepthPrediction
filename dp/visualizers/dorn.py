@@ -10,7 +10,7 @@ import numpy as np
 
 from dp.visualizers.utils import depth_to_color, error_to_color
 from dp.visualizers.base_visualizer import BaseVisualizer
-from dp.utils.wrappers import tensor2numpy, interpolate
+from dp.utils.pyt_ops import tensor2numpy, interpolate
 
 
 class dorn_visualizer(BaseVisualizer):
@@ -28,7 +28,7 @@ class dorn_visualizer(BaseVisualizer):
         if batch["target"].shape != out["target"][-1].shape:
             h, w = batch["target"].shape[-2:]
             # batch = interpolate(batch, size=(h, w), mode='nearest')
-            out = interpolate(out, size=(h, w), mode='nearest')
+            out = interpolate(out, size=(h, w), mode='bilinear', align_corners=True)
 
         image = batch["image_n"].numpy()
 

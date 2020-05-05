@@ -7,7 +7,8 @@
 
 import copy
 import numpy as np
-from dp.utils.wrappers import check_allfloat, make_iterative_func
+from dp.utils.wrappers import make_iterative_func
+from dp.utils.pyt_ops import check_allfloat
 
 
 class AverageMeter(object):

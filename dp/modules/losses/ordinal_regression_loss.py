@@ -51,7 +51,7 @@ class OrdinalRegressionLoss(object):
         :return: loss: loss value, torch.float
         """
         if prob.shape != gt.shape:
-            F.interpolate(prob, size=gt.shape[-2:], mode="nearest")
+            prob = F.interpolate(prob, size=gt.shape[-2:], mode="bilinear", align_corners=True)
 
         # N, C, H, W = prob.shape
         valid_mask = gt > 0.
