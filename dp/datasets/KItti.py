@@ -8,6 +8,7 @@
 """
 
 import os
+import cv2
 import math
 import random
 import numpy as np
@@ -42,24 +43,29 @@ class Kitti(BaseDataset):
         assert W == dW and H == dH, \
             "image shape should be same with depth, but image shape is {}, depth shape is {}".format((H, W), (dH, dW))
 
-        scale_h, scale_w = max(crop_h/H, 1.0), max(crop_w/W, 1.0)
-        scale = max(scale_h, scale_w)
+        # scale_h, scale_w = max(crop_h/H, 1.0), max(crop_w/W, 1.0)
+        # scale = max(scale_h, scale_w)
         # H, W = math.ceil(scale*H), math.ceil(scale*W)
-        H, W = max(int(scale*H), crop_h), max(int(scale*W), crop_w)
+        # H, W = max(int(scale*H), crop_h), max(int(scale*W), crop_w)
 
         # print("w={}, h={}".format(W, H))
+        scale = max(crop_h / H, 1.0)
+        H, W = max(crop_h, H), math.ceil(scale * W)
         image = image.resize((W, H), Image.BILINEAR)
         # depth = cv2.resize(depth, (W, H), cv2.INTER_LINEAR)
         # print("image shape:", image.size, " depth shape:", depth.shape)
 
         crop_dh, crop_dw = int(crop_h / scale), int(crop_w / scale)
+
         # random crop size
         x = random.randint(0, W - crop_w)
         y = random.randint(0, H - crop_h)
-        dx, dy = math.ceil(x/scale), math.ceil(y/scale)
+        dx, dy = math.floor(x/scale), math.floor(y/scale)
+        # print("corp dh = {}, crop dw = {}".format(crop_dh, crop_dw))
 
         image = image.crop((x, y, x + crop_w, y + crop_h))
         depth = depth[dy:dy + crop_dh, dx:dx + crop_dw]
+        # print("depth shape: ", depth.shape)
 
         # normalize
         image = np.asarray(image).astype(np.float32) / 255.0
@@ -77,14 +83,17 @@ class Kitti(BaseDataset):
         assert W == dW and H == dH, \
             "image shape should be same with depth, but image shape is {}, depth shape is {}".format((H, W), (dH, dW))
 
-        scale_h, scale_w = max(crop_h/H, 1.0), max(crop_w/W, 1.0)
-        scale = max(scale_h, scale_w)
-        # H, W = math.ceil(scale*H), math.ceil(scale*W)
-        H, W = max(int(scale*H), crop_h), max(int(scale*W), crop_w)
+        # scale_h, scale_w = max(crop_h/H, 1.0), max(crop_w/W, 1.0)
+        # scale = max(scale_h, scale_w)
+        # # H, W = math.ceil(scale*H), math.ceil(scale*W)
+        scale = max(crop_h / H, 1.0)
+        H, W = max(crop_h, H), math.ceil(scale * W)
+        # H, W = max(int(scale*H), crop_h), max(int(scale*W), crop_w)
 
         image_n = image.copy()
         image = image.resize((W, H), Image.BILINEAR)
-        crop_dh, crop_dw = math.ceil(crop_h/scale), math.ceil(crop_w/scale)
+        crop_dh, crop_dw = int(crop_h/scale), int(crop_w/scale)
+        # print("corp dh = {}, crop dw = {}".format(crop_dh, crop_dw))
         # depth = cv2.resize(depth, (W, H), cv2.INTER_LINEAR)
 
         # center crop
